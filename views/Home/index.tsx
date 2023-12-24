@@ -164,11 +164,14 @@ function deepTrans(
   return [nodes, edges];
 }
 
+let last = Date.now();
+
 export default function Home() {
   const [t] = useTranslation();
   const [graph, setGraph] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [select, setSelect] = useState(false);
+  const [render, setRender] = useState(false);
   useEffect(() => {
     // if (t) return;
     // t = true;
@@ -190,15 +193,24 @@ export default function Home() {
       // const tables = await p;
 
       // console.log(tables);
+      let f = Date.now();
+      last = f;
       setSelect(true);
       setLoading(true);
+      setRender(false);
       console.log(e);
       const t = await deepGet(e.data.recordId, e.data.tableId);
+      if (f !== last) {
+        return;
+      }
       console.log(t);
       const g = deepTrans(t);
       console.log(g);
       setGraph({ initialNodes: g[0], initialEdges: g[1] });
-      setLoading(false);
+      setRender(true);
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     });
     return () => {
       emitter.off("change-record");
@@ -223,12 +235,27 @@ export default function Home() {
           }
           description={t("empty-tip")}
         />
-      ) : !loading ? (
-        <ReactFlowProvider>
-          <LayoutFlow {...graph} />
-        </ReactFlowProvider>
       ) : (
-        <div>
+        render && (
+          <ReactFlowProvider>
+            <LayoutFlow {...graph} />
+          </ReactFlowProvider>
+        )
+      )}
+
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            zIndex: 1000,
+            width: "100vw",
+            height: "100vh",
+            background: "#fff",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <Spin size="large"></Spin>
         </div>
       )}
