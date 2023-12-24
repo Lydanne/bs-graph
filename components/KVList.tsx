@@ -125,6 +125,7 @@ function mapCb(map: any, key: string, cb: any) {
 
 function formatValues(data: any[] = [], fields: any) {
   const fieldMap = formatFieldsMap(fields);
+  let text = "";
   const r = data.reduce((acc, c) => {
     const field = fieldMap[c.field];
 
@@ -132,6 +133,9 @@ function formatValues(data: any[] = [], fields: any) {
       acc["display"] = c.value?.[0]?.text;
     } else if (field.type === FieldType.Text) {
       acc[c.field] = c.value?.[0]?.text;
+      if (!text) {
+        text = c.value?.[0]?.text;
+      }
     } else if (field.type === FieldType.MultiSelect) {
       acc[c.field] = c.value?.map((item: any) => item.id) ?? [];
     } else if (field.type === FieldType.DateTime) {
@@ -141,18 +145,22 @@ function formatValues(data: any[] = [], fields: any) {
     } else if (field.type === FieldType.SingleLink) {
       acc[c.field] = "SingleLink";
     } else {
-      const cell = c.value;
-      acc[c.field] =
-        typeof c === "object"
-          ? cell?.text ??
-            cell
-              ?.map?.((item: any) => item.text ?? item.name ?? item.label)
-              .join(",")
-          : cell;
+      // const cell = c.value;
+      // acc[c.field] =
+      //   typeof c === "object"
+      //     ? cell?.text ??
+      //       cell
+      //         ?.map?.((item: any) => item.text ?? item.name ?? item.label)
+      //         .join(",")
+      //     : cell;
     }
     // acc[c.field] = c.value;
     return acc;
   }, {});
+
+  if (!r["display"]) {
+    r["display"] = text;
+  }
   console.log({ r });
 
   return r;

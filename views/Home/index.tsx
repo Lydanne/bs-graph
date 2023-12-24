@@ -169,7 +169,7 @@ let last = Date.now();
 export default function Home() {
   const [t] = useTranslation();
   const [graph, setGraph] = useState<any>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [select, setSelect] = useState(false);
   const [render, setRender] = useState(false);
   useEffect(() => {
