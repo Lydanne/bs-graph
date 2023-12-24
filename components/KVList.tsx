@@ -1,8 +1,20 @@
-import { Card, Form, List, Select } from "@douyinfe/semi-ui";
+import { IconClose, IconDoubleChevronRight } from "@douyinfe/semi-icons";
+import {
+  Button,
+  Card,
+  Descriptions,
+  Form,
+  List,
+  Popover,
+  Select,
+} from "@douyinfe/semi-ui";
 import { FieldType } from "@lark-base-open/js-sdk";
+import { useState } from "react";
 import { Handle, Position } from "reactflow";
 
 export function KVList(props: any) {
+  const [visible, setVisible] = useState(false);
+  const mapVal = formatValues(props.data.data, props.data.fields);
   return (
     <div className="kvlist-node" id={props.id}>
       <Card
@@ -11,77 +23,96 @@ export function KVList(props: any) {
         bodyStyle={{ paddingTop: 0, paddingBottom: 0 }}
         title={
           <h1>
-            {!props.data.start && (
-              <Handle
-                type="target"
-                position={Position.Left}
-                style={{ top: 30 }}
-              />
-            )}
-            {props.data.label}
+            <Handle
+              type="target"
+              position={Position.Left}
+              style={{ top: 30 }}
+            />
+            <Popover
+              visible={visible}
+              showArrow
+              arrowPointAtCenter
+              rePosKey={Date.now()}
+              clickToHide
+              closeOnEsc
+              content={
+                <div style={{ maxWidth: "50vw", wordBreak: "break-all" }}>
+                  <IconClose size="small" color="#666" />
+                  <Descriptions
+                    size="small"
+                    data={props.data.fields.map((item: any) => ({
+                      key: item.label,
+                      value: mapVal[item.id],
+                    }))}
+                  />
+                </div>
+              }
+              trigger="custom"
+              position={"rightTop"}
+              spacing={10}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span>{props.data.label}</span>
+                <Button
+                  style={{ marginLeft: "10px" }}
+                  size="small"
+                  icon={<IconDoubleChevronRight />}
+                  onClick={() => setVisible(!visible)}
+                ></Button>
+              </div>
+            </Popover>
           </h1>
         }
       >
         <Form
           labelPosition="left"
           labelAlign="right"
-          initValues={formatValues(props.data.data, props.data.fields)}
+          initValues={mapVal}
           onClickCapture={(e) => {
             e.stopPropagation();
           }}
         >
-          {props.data.fields.map((item: any, i: number) => {
-            return (
-              <div key={item.id}>
-                {mapCb(
-                  {
-                    [FieldType.MultiSelect]: () => (
-                      <Form.Select
-                        field={item.id}
-                        label={item.label}
-                        multiple
-                        style={{ width: 200 }}
-                        clickToHide
-                      >
-                        {item.property.options.map((item: any) => (
-                          <Form.Select.Option key={item.id} value={item.id}>
-                            {item.name}
-                          </Form.Select.Option>
-                        ))}
-                      </Form.Select>
-                    ),
-                    [FieldType.DateTime]: () => (
-                      <Form.DatePicker
-                        field={item.id}
-                        label={item.label}
-                        type="dateTime"
-                        format={item.property.dateFormat}
-                      />
-                    ),
-                  },
-                  item.type,
-                  () => (
-                    <Form.Input
-                      field={item.id}
-                      label={item.label}
-                      readonly
-                      trigger="blur"
-                      style={{ width: 200 }}
-                    />
-                  )
-                )}
-                {(item.type === FieldType.SingleLink ||
-                  item.type === FieldType.DuplexLink) && (
-                  <Handle
-                    id={item.id}
-                    type="source"
-                    style={{ top: i * 56 + 52 + 29 }}
-                    position={Position.Right}
+          <Form.Input
+            field="display"
+            label="#"
+            readonly
+            trigger="blur"
+            style={{ width: 200 }}
+          />
+          {props.data.fields
+            .filter(
+              (item: any) =>
+                item.type === FieldType.SingleLink ||
+                item.type === FieldType.DuplexLink
+            )
+            .map((item: any, i: number) => {
+              return (
+                <div key={item.id}>
+                  <Form.Input
+                    field={item.id}
+                    label={item.label}
+                    readonly
+                    trigger="blur"
+                    style={{ width: 200 }}
                   />
-                )}
-              </div>
-            );
-          })}
+                  {(item.type === FieldType.SingleLink ||
+                    item.type === FieldType.DuplexLink) && (
+                    <Handle
+                      id={item.id}
+                      type="source"
+                      style={{ top: i * 56 + 52 + 29 }}
+                      position={Position.Right}
+                    />
+                  )}
+                </div>
+              );
+            })}
         </Form>
       </Card>
     </div>
@@ -92,16 +123,23 @@ function mapCb(map: any, key: string, cb: any) {
   return map?.[key]?.() ?? cb();
 }
 
-function formatValues(data: any[], fields: any[] = []) {
+function formatValues(data: any[] = [], fields: any) {
   const fieldMap = formatFieldsMap(fields);
   const r = data.reduce((acc, c) => {
     const field = fieldMap[c.field];
-    if (field.type === FieldType.Text) {
+
+    if (field.type === FieldType.Text && field?.meta?.isPrimary) {
+      acc["display"] = c.value?.[0]?.text;
+    } else if (field.type === FieldType.Text) {
       acc[c.field] = c.value?.[0]?.text;
     } else if (field.type === FieldType.MultiSelect) {
       acc[c.field] = c.value?.map((item: any) => item.id) ?? [];
     } else if (field.type === FieldType.DateTime) {
       acc[c.field] = c.value;
+    } else if (field.type === FieldType.DuplexLink) {
+      acc[c.field] = "DuplexLink";
+    } else if (field.type === FieldType.SingleLink) {
+      acc[c.field] = "SingleLink";
     } else {
       const cell = c.value;
       acc[c.field] =
@@ -112,6 +150,7 @@ function formatValues(data: any[], fields: any[] = []) {
               .join(",")
           : cell;
     }
+    // acc[c.field] = c.value;
     return acc;
   }, {});
   console.log({ r });
