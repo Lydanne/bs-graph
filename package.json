@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3000 --hostname 0.0.0.0",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "preview": "npx serve-lite 8080 ./dist"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.0.4",

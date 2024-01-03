@@ -186,6 +186,7 @@ export default function Home() {
       setSelect(true);
       setLoading(true);
       setGraph(options);
+      setRender(true);
       setLoading(false);
       return;
     }
