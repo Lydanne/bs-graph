@@ -74,7 +74,7 @@ export const LayoutFlow = ({
   );
 
   const expand = useCallback(() => {
-    const nw = open("/index.html", "_block");
+    const nw = open(".", "_block");
     console.log("open", nw);
     if (nw) {
       (nw as any).options = () => ({
